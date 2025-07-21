@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <title>Teletext VBI Waveform Generator</title>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+    <link rel='stylesheet' type='text/css' media='screen' href='main.css'>
+</head>
+<body>
+    <div class="container">
+        <h1>Teletext VBI Waveform Generator</h1>
+        
+        <div class="waveform-container">
+            <canvas id="waveform" width="1200" height="300"></canvas>
+            <div class="byte-display" id="byteDisplay"></div>
+        </div>
+        
+        <div class="controls">
+            <div class="input-group">
+                <label for="magazine">Magazine Number (1-8):</label>
+                <input type="number" id="magazine" min="1" max="8" value="1">
+            </div>
+            
+            <div class="input-group">
+                <label for="row">Row (0-24):</label>
+                <input type="number" id="row" min="0" max="24" value="0">
+            </div>
+            
+            <div class="input-group">
+                <label for="text">Text (Max 40 characters):</label>
+                <input type="text" id="text" maxlength="40" placeholder="Enter teletext content...">
+            </div>
+        </div>
+    </div>
+    
+    <script src='main.js'></script>
+</body>
+</html>
