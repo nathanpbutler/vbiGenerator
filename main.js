@@ -181,6 +181,20 @@ function generateVBIData(magazine, row, text) {
     return data;
 }
 
+// Global variables for interaction
+let currentData = [];
+let hoveredByteIndex = -1;
+
+// Get byte index from canvas coordinates
+function getByteIndexFromCoords(canvas, x, y) {
+    const bitsPerByte = 8;
+    const totalBits = currentData.length * bitsPerByte;
+    const bitWidth = canvas.width / totalBits;
+    const byteWidth = bitWidth * bitsPerByte;
+    
+    return Math.floor(x / byteWidth);
+}
+
 // Draw waveform on canvas
 function drawWaveform(canvas, data) {
     const ctx = canvas.getContext('2d');
@@ -194,8 +208,8 @@ function drawWaveform(canvas, data) {
     ctx.fillRect(0, 0, width, height);
     
     // Grid lines
-    ctx.strokeStyle = '#333';
-    ctx.lineWidth = 1;
+    //ctx.strokeStyle = '#333';
+    //ctx.lineWidth = 1;
     
     // Horizontal grid lines
     for (let y = 0; y < height; y += 30) {
@@ -222,7 +236,7 @@ function drawWaveform(canvas, data) {
         // Data bits (LSB first)
         for (let bit = 0; bit < 8; bit++) {
             const bitValue = (byte >> bit) & 1;
-            const y = bitValue ? height * 0.2 : height * 0.8;
+            const y = bitValue ? height * 0.05 : height * 1.0; // 5% for high, 100% for low
             ctx.lineTo(x, y);
             ctx.lineTo(x + bitWidth, y);
             x += bitWidth;
@@ -231,39 +245,206 @@ function drawWaveform(canvas, data) {
     
     ctx.stroke();
     
-    // Draw byte separators and labels
-    ctx.strokeStyle = '#666';
+    // Draw byte separators and labels (show all hex values)
     ctx.fillStyle = '#fff';
     ctx.font = '10px monospace';
     
     x = 0;
     for (let i = 0; i < data.length; i++) {
-        if (i < 5) { // Only label first 5 bytes
-            ctx.beginPath();
-            ctx.moveTo(x, 0);
-            ctx.lineTo(x, height);
-            ctx.stroke();
-            
-            const label = `0x${data[i].toString(16).toUpperCase().padStart(2, '0')}`;
-            ctx.fillText(label, x + 2, 12);
-        }
+        // Show hex values for all bytes
+        ctx.strokeStyle = i === hoveredByteIndex ? '#ff0' : '#666';
+        ctx.lineWidth = i === hoveredByteIndex ? 2 : 1;
+        
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, height);
+        ctx.stroke();
+        
+        const label = `0x${data[i].toString(16).toUpperCase().padStart(2, '0')}`;
+        ctx.fillText(label, x + 2, 12);
         x += bitWidth * 8; // 8 bits per byte
+    }
+    
+    // Highlight hovered byte with colored rectangle
+    if (hoveredByteIndex >= 0 && hoveredByteIndex < data.length) {
+        const byteX = hoveredByteIndex * bitWidth * 8;
+        ctx.strokeStyle = '#666';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(byteX, 0, bitWidth * 8, height);
     }
 }
 
-// Update byte display
-function updateByteDisplay(data) {
-    const display = document.getElementById('byteDisplay');
-    const firstBytes = data.slice(0, 5).map(b => `0x${b.toString(16).toUpperCase().padStart(2, '0')}`).join(' ');
-    const remainingCount = data.length - 5;
+// Draw barcode on canvas
+function drawBarcode(canvas, data) {
+    const ctx = canvas.getContext('2d');
+    const width = canvas.width;
+    const height = canvas.height;
     
-    display.innerHTML = `
-        <div class="byte-info">
-            <strong>First 5 bytes:</strong> ${firstBytes}
-            <br>
-            <strong>Remaining:</strong> ${remainingCount} character bytes (with odd parity)
-        </div>
-    `;
+    ctx.clearRect(0, 0, width, height);
+    
+    // Background
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, width, height);
+    
+    const bitsPerByte = 8;
+    const totalBits = data.length * bitsPerByte;
+    const bitWidth = width / totalBits;
+    
+    let x = 0;
+    
+    for (let byteIndex = 0; byteIndex < data.length; byteIndex++) {
+        const byte = data[byteIndex];
+        
+        // Data bits (LSB first)
+        for (let bit = 0; bit < 8; bit++) {
+            const bitValue = (byte >> bit) & 1;
+            if (bitValue) {
+                ctx.fillStyle = '#0f0';
+                ctx.fillRect(x, height * 0.05, bitWidth, height * 1.0);
+            }
+            x += bitWidth;
+        }
+    }
+    
+    // Draw byte separators and labels (show all hex values)
+    ctx.fillStyle = '#fff';
+    ctx.font = '10px monospace';
+    
+    x = 0;
+    for (let i = 0; i < data.length; i++) {
+        // Show hex values for all bytes
+        //ctx.strokeStyle = i === hoveredByteIndex ? '#ff0' : '#666';
+        ctx.lineWidth = i === hoveredByteIndex ? 2 : 1;
+        
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, height);
+        ctx.stroke();
+        
+        const label = `0x${data[i].toString(16).toUpperCase().padStart(2, '0')}`;
+        ctx.fillText(label, x + 2, 12);
+        x += bitWidth * 8; // 8 bits per byte
+    }
+    
+    // Highlight hovered byte with colored rectangle
+    if (hoveredByteIndex >= 0 && hoveredByteIndex < data.length) {
+        const byteX = hoveredByteIndex * bitWidth * 8;
+        ctx.strokeStyle = '#666';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(byteX, 0, bitWidth * 8, height);
+    }
+}
+
+// Draw bits on canvas
+function drawBits(canvas, data) {
+    const ctx = canvas.getContext('2d');
+    const width = canvas.width;
+    const height = canvas.height;
+    
+    ctx.clearRect(0, 0, width, height);
+    
+    // Background
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, width, height);
+    
+    const bitsPerByte = 8;
+    const totalBits = data.length * bitsPerByte;
+    const bitWidth = width / totalBits;
+    const bitRadius = Math.min(bitWidth / 3, 8);
+    
+    let x = 0;
+    
+    for (let byteIndex = 0; byteIndex < data.length; byteIndex++) {
+        const byte = data[byteIndex];
+        
+        // Data bits (LSB first)
+        for (let bit = 0; bit < 8; bit++) {
+            const bitValue = (byte >> bit) & 1;
+            if (bitValue) {
+                ctx.fillStyle = '#0f0';
+                ctx.beginPath();
+                ctx.arc(x + bitWidth / 2, height / 2, bitRadius, 0, 2 * Math.PI);
+                ctx.fill();
+            }
+            x += bitWidth;
+        }
+    }
+    
+    // Draw byte separators and labels (show all hex values)
+    ctx.fillStyle = '#fff';
+    ctx.font = '10px monospace';
+    
+    x = 0;
+    for (let i = 0; i < data.length; i++) {
+        // Show hex values for all bytes
+        //ctx.strokeStyle = i === hoveredByteIndex ? '#ff0' : '#666';
+        ctx.lineWidth = i === hoveredByteIndex ? 2 : 1;
+        
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, height);
+        ctx.stroke();
+        
+        const label = `0x${data[i].toString(16).toUpperCase().padStart(2, '0')}`;
+        ctx.fillText(label, x + 2, 12);
+        x += bitWidth * 8; // 8 bits per byte
+    }
+    
+    // Highlight hovered byte with colored rectangle
+    if (hoveredByteIndex >= 0 && hoveredByteIndex < data.length) {
+        const byteX = hoveredByteIndex * bitWidth * 8;
+        ctx.strokeStyle = '#666';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(byteX, 0, bitWidth * 8, height);
+    }
+}
+
+
+// Copy to clipboard function
+async function copyToClipboard(text) {
+    try {
+        await navigator.clipboard.writeText(text);
+        //showCopyFeedback('Copied: ' + text);
+        showCopyFeedback('Copied hex values to clipboard');
+    } catch (err) {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        try {
+            document.execCommand('copy');
+            //showCopyFeedback('Copied: ' + text);
+            showCopyFeedback('Copied hex values to clipboard');
+        } catch (err) {
+            showCopyFeedback('Copy failed');
+        }
+        document.body.removeChild(textArea);
+    }
+}
+
+// Show copy feedback
+function showCopyFeedback(message) {
+    // Remove existing feedback
+    const existing = document.querySelector('.copy-feedback');
+    if (existing) existing.remove();
+    
+    // Create feedback element
+    const feedback = document.createElement('div');
+    feedback.className = 'copy-feedback';
+    feedback.textContent = message;
+    document.body.appendChild(feedback);
+    
+    // Remove after 2 seconds
+    setTimeout(() => {
+        if (feedback.parentNode) {
+            feedback.parentNode.removeChild(feedback);
+        }
+    }, 2000);
 }
 
 // Update waveform based on inputs
@@ -271,20 +452,142 @@ function updateWaveform() {
     const magazine = parseInt(document.getElementById('magazine').value);
     const row = parseInt(document.getElementById('row').value);
     const text = document.getElementById('text').value;
+    const displayMode = document.getElementById('displayMode').value;
     
     const canvas = document.getElementById('waveform');
     const data = generateVBIData(magazine, row, text);
     
-    drawWaveform(canvas, data);
-    updateByteDisplay(data);
+    // Store current data globally for interaction
+    currentData = data;
+    
+    // Adjust canvas height based on display mode
+    if (displayMode === 'bits') {
+        canvas.height = 100;
+    } else {
+        canvas.height = 400;
+    }
+    
+    // Choose drawing function based on display mode
+    switch (displayMode) {
+        case 'waveform':
+            drawWaveform(canvas, data);
+            break;
+        case 'barcode':
+            drawBarcode(canvas, data);
+            break;
+        case 'bits':
+            drawBits(canvas, data);
+            break;
+        default:
+            drawWaveform(canvas, data);
+    }
 }
 
 // Initialize when page loads
 document.addEventListener('DOMContentLoaded', function() {
-    // Add event listeners
+    const canvas = document.getElementById('waveform');
+    
+    // Add event listeners for form controls
     document.getElementById('magazine').addEventListener('input', updateWaveform);
     document.getElementById('row').addEventListener('input', updateWaveform);
     document.getElementById('text').addEventListener('input', updateWaveform);
+    document.getElementById('displayMode').addEventListener('change', updateWaveform);
+    
+    // Add canvas interaction event listeners
+    canvas.addEventListener('mousemove', function(event) {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        const x = (event.clientX - rect.left) * scaleX;
+        const y = (event.clientY - rect.top) * scaleY;
+        
+        const newHoveredIndex = getByteIndexFromCoords(canvas, x, y);
+        if (newHoveredIndex !== hoveredByteIndex && newHoveredIndex >= 0 && newHoveredIndex < currentData.length) {
+            hoveredByteIndex = newHoveredIndex;
+            updateWaveform(); // Redraw with highlight
+        }
+    });
+    
+    canvas.addEventListener('mouseleave', function() {
+        if (hoveredByteIndex >= 0) {
+            hoveredByteIndex = -1;
+            updateWaveform(); // Redraw without highlight
+        }
+    });
+    
+    canvas.addEventListener('click', function(event) {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        const x = (event.clientX - rect.left) * scaleX;
+        const y = (event.clientY - rect.top) * scaleY;
+        
+        const clickedByteIndex = getByteIndexFromCoords(canvas, x, y);
+        if (clickedByteIndex >= 0 && clickedByteIndex < currentData.length) {
+            // Copy all hex values
+            const allHexValues = currentData.map(byte => `0x${byte.toString(16).toUpperCase().padStart(2, '0')}`);
+            const hexString = allHexValues.join(', ');
+            copyToClipboard(hexString);
+        }
+    });
+    
+    // Touch events for mobile
+    canvas.addEventListener('touchstart', function(event) {
+        event.preventDefault();
+        const touch = event.touches[0];
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        const x = (touch.clientX - rect.left) * scaleX;
+        const y = (touch.clientY - rect.top) * scaleY;
+        
+        const touchedByteIndex = getByteIndexFromCoords(canvas, x, y);
+        if (touchedByteIndex >= 0 && touchedByteIndex < currentData.length) {
+            hoveredByteIndex = touchedByteIndex;
+            updateWaveform(); // Show hex values
+            
+            // Copy all hex values
+            const allHexValues = currentData.map(byte => `0x${byte.toString(16).toUpperCase().padStart(2, '0')}`);
+            const hexString = allHexValues.join(', ');
+            copyToClipboard(hexString);
+        }
+    });
+    
+    canvas.addEventListener('touchend', function(event) {
+        event.preventDefault();
+        // Keep showing hex for a bit longer on mobile
+        setTimeout(() => {
+            hoveredByteIndex = -1;
+            updateWaveform();
+        }, 2000);
+    });
+    
+    // Add spinner button functionality
+    document.querySelectorAll('.spinner-up').forEach(button => {
+        button.addEventListener('click', function() {
+            const targetId = this.dataset.target;
+            const input = document.getElementById(targetId);
+            const max = parseInt(input.max);
+            const current = parseInt(input.value);
+            if (current < max) {
+                input.value = current + 1;
+                input.dispatchEvent(new Event('input'));
+            }
+        });
+    });
+    
+    document.querySelectorAll('.spinner-down').forEach(button => {
+        button.addEventListener('click', function() {
+            const targetId = this.dataset.target;
+            const input = document.getElementById(targetId);
+            const min = parseInt(input.min);
+            const current = parseInt(input.value);
+            if (current > min) {
+                input.value = current - 1;
+                input.dispatchEvent(new Event('input'));
+            }
+        });
+    });
     
     // Initial render
     updateWaveform();

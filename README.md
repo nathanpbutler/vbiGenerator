@@ -41,4 +41,11 @@ The generator implements the complete teletext protocol:
 
 ## Credits
 
-Documentation and project setup assistance provided by Claude Code.
+### Font
+
+This project uses the [Bedstead font](https://bjh21.me.uk/bedstead/) by Ben Harris, which provides an authentic teletext appearance.
+
+### Development
+
+- Project created with assistance from [Claude Code](https://claude.ai/code)
+- Documentation and project setup assistance provided by Claude Code

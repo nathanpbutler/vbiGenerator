@@ -1,36 +1,84 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset='utf-8'>
-    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <!-- HTML Meta Tags -->
     <title>Teletext VBI Waveform Generator</title>
-    <meta name='viewport' content='width=device-width, initial-scale=1'>
+    <meta name='viewport' content='width=device-width, initial-scale=1, viewport-fit=cover'>
+    <meta name="description" content="Generate and visualize teletext VBI waveforms with real-time digital signal display and proper Hamming encoding.">
+
+    <!-- Facebook Meta Tags -->
+    <meta property="og:url" content="">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Teletext VBI Waveform Generator">
+    <meta property="og:description" content="Generate and visualize teletext VBI waveforms with real-time digital signal display and proper Hamming encoding.">
+    <meta property="og:image" content="">
+
+    <!-- Twitter Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta property="twitter:domain" content="">
+    <meta property="twitter:url" content="">
+    <meta name="twitter:title" content="Teletext VBI Waveform Generator">
+    <meta name="twitter:description" content="Generate and visualize teletext VBI waveforms with real-time digital signal display and proper Hamming encoding.">
+    <meta name="twitter:image" content="">
+    
     <link rel='stylesheet' type='text/css' media='screen' href='main.css'>
 </head>
 <body>
     <div class="container">
         <h1>Teletext VBI Waveform Generator</h1>
         
-        <div class="waveform-container">
-            <canvas id="waveform" width="1200" height="300"></canvas>
-            <div class="byte-display" id="byteDisplay"></div>
-        </div>
-        
         <div class="controls">
-            <div class="input-group">
-                <label for="magazine">Magazine Number (1-8):</label>
-                <input type="number" id="magazine" min="1" max="8" value="1">
-            </div>
-            
-            <div class="input-group">
-                <label for="row">Row (0-24):</label>
-                <input type="number" id="row" min="0" max="24" value="0">
+            <div class="top-controls">
+                <div class="number-inputs">
+                    <div class="input-group">
+                        <label class="top-labels" for="magazine">MAG</label>
+                        <div class="number-input-wrapper">
+                            <input type="number" id="magazine" min="1" max="8" value="8">
+                            <div class="spinner-buttons">
+                                <button type="button" class="spinner-up" data-target="magazine">▲</button>
+                                <button type="button" class="spinner-down" data-target="magazine">▼</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label class="top-labels" for="row">ROW</label>
+                        <div class="number-input-wrapper">
+                            <input type="number" id="row" min="1" max="24" value="20">
+                            <div class="spinner-buttons">
+                                <button type="button" class="spinner-up" data-target="row">▲</button>
+                                <button type="button" class="spinner-down" data-target="row">▼</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label class="top-labels" for="displayMode">MODE</label>
+                        <select id="displayMode">
+                            <option value="waveform">Waveform</option>
+                            <option value="barcode">Barcode</option>
+                            <option value="bits">Bits</option>
+                        </select>
+                    </div>
+                </div>
             </div>
             
             <div class="input-group">
                 <label for="text">Text (Max 40 characters):</label>
                 <input type="text" id="text" maxlength="40" placeholder="Enter teletext content...">
             </div>
+        </div>
+        
+        <div class="waveform-container">
+            <canvas id="waveform" width="1200" height="400"></canvas>
+        </div>
+
+        <div class="footer">
+            <p class="footer-text">
+                Created with <a href="https://claude.ai/code" target="_blank" rel="noopener" class="footer-link">Claude Code</a> • 
+                Uses <a href="https://bjh21.me.uk/bedstead/" target="_blank" rel="noopener" class="footer-link">Bedstead font</a> by Ben Harris
+            </p>
         </div>
     </div>
     
